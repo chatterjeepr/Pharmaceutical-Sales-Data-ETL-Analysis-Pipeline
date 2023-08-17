@@ -1,0 +1,90 @@
+---
+title: "Explore and Mine Data"
+author: "Pratik Chatterjee"
+date: "08/08/2023"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+# Analyzing Sales Data
+
+In this report, we will analyze the sales data stored in the MySQL data warehouse from Part 2.
+
+```{r MySQLDatabaseCreation}
+# Load required libraries
+library(DBI)
+library(ggplot2)
+
+#Settings freemysqlhosting.net (max 5MB)
+db_name_fh <- "sql7628203"
+db_user_fh <- "sql7628203"
+db_host_fh <- "sql7.freemysqlhosting.net"
+db_pwd_fh <- "NPqraIa1dg"
+db_port_fh <- 3306
+
+# 3. Connect to remote server database
+con <- dbConnect(RMySQL::MySQL(), user = db_user_fh, password = db_pwd_fh, dbname = db_name_fh, host = db_host_fh, port = db_port_fh)
+```
+
+## Analytical Query I: Top Five Sales Reps by Year
+
+Let's start by examining the top five sales representatives with the most sales broken down by year.
+
+```{r AnalyticalQuery1}
+# Execute SQL query to get top five sales reps by year
+query1 <- "
+SELECT year, first_name, last_name, SUM(total_sold) AS total_sales
+FROM rep_facts
+GROUP BY year, first_name, last_name
+ORDER BY year DESC, total_sales DESC
+LIMIT 5
+"
+```
+
+
+```{r DisplayQuery1}
+top_reps_by_year <- dbGetQuery(con, query1)
+# Print the results
+top_reps_by_year
+```
+The top five sales representatives who achieved the highest sales in the year 2020 is presented above. The information is organized in a clear and easily understandable format, making it valuable for both analysts and managers to make informed decisions based on sales performance.
+
+The above table showcases the top sales reps who contributed significantly to the company's success in the year 2020 the top being Walison da Silva with a total sales of 1,929,133 currency. 
+
+## Analytical Query II: Total Sold Per Quarter
+
+Next, let's visualize the total sales per quarter using a line graph.
+
+```{r AnalyticalQuery2}
+# Execute SQL query to get total sold per month
+query2 <- "
+SELECT year, quarter, SUM(total_sold) AS total_sales
+FROM product_facts
+GROUP BY year, quarter
+ORDER BY year, quarter
+"
+```
+
+```{r DisplayQuery2}
+total_sales_per_month <- dbGetQuery(con, query2)
+# Create a line graph
+ggplot(total_sales_per_month, aes(x = quarter, y = total_sales, color = factor(year))) +
+  geom_line() +
+  labs(title = "Total Sold Per Quarter", x = "Quarter", y = "Total Sales") +
+  scale_color_discrete(name = "Year")
+```
+In this section, we present a line graph that illustrates the total sales per quarter. The graph provides a visual representation of the sales distribution across different quarters, enabling analysts and managers to quickly identify trends and patterns in sales performance.
+
+From the graph, we can observe that Quarter 3 has the highest total sales, exceeding 1,700,000 currency. This indicates a strong performance during that period. However, Quarter 2 also exhibit significant sales figures, while Quarter 1 and 4 shows the least sales.
+
+
+# Conclusion
+
+In this report, we analyzed the sales data using two analytical queries. We identified the top five sales reps with the most sales broken down by year and visualized the total sales per quarter using a line graph.
+```{r Databasedisconnection}
+dbDisconnect(con)
+```
+
